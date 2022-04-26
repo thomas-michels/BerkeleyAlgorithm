@@ -6,6 +6,8 @@ from random import randint
 from datetime import datetime
 from uuid import uuid4
 from app.utils import adjust_time_by_minutes
+import socket
+from time import sleep
 
 
 class Client:
@@ -13,9 +15,32 @@ class Client:
     Client class
     """
 
+    HOST = "localhost"
+    PORT = 8000
+
     def __init__(self) -> None:
         self.id = uuid4()
         self.time = self.__generate_random_time()
+        self.start_connection()
+
+    def start_connection(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((self.HOST, self.PORT))
+        print(f"Cliente conectando em {self.HOST}:{self.PORT}")
+        s.sendall(b"Conectado")
+        while True:
+            print(f"Hora Atual no cliente  - {self.time}")
+            data = s.recv(1024)
+            if data == b"get time":
+                print("Servidor Solicitou Horario")
+                s.sendall(bytes(str(self.time), encoding="utf-8"))
+
+            else:
+                print("Awaiting...")
+                s.sendall(b"awating")
+
+            print("#" * 50)
+            sleep(1)
 
     def calculate_time_diff_to_server(self, server_time: datetime) -> int:
         """
