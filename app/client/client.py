@@ -30,8 +30,13 @@ class Client:
             while True:
                 response = str(sock.recv(1024), 'ascii')
                 print("Received: {}".format(response))
-                if response == "get time":
-                    sock.send(bytes("enviando", 'ascii'))
+
+                if response.startswith("ID:"):
+                    self.id = response.split(": ")[1]
+
+                if response.startswith("server_time:"):
+                    message = f"time: {self.time}"
+                    sock.send(bytes(message, 'ascii'))
 
                 elif response == "connected":
                     sock.send(bytes(str(datetime.now()), 'ascii'))

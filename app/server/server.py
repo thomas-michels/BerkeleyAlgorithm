@@ -2,6 +2,7 @@
     Module for Server Class
 """
 
+from time import sleep
 from typing import Dict, List
 from app.client import Client
 from datetime import datetime
@@ -24,29 +25,49 @@ class Server(Client):
         self.sock.bind((self.HOST, self.PORT))
 
         self.time = datetime.now()
-        self.client_list: List[Client] = []
+        self.client_list: List[Dict] = []
 
         self.listen()
 
     def listen(self):
         self.sock.listen(5)
+        print("Creating thread for sync")
+        threading.Thread(target = self.sync).start()
         while True:
             cur_thread = threading.current_thread()
             print(f"{cur_thread.name}: server listening...")
             client, address = self.sock.accept()
-            client.send(b"Iniciando nova thread")
-            threading.Thread(target = self.listenToClient,args = (client,address)).start()
+            threading.Thread(target = self.listenToClient, args = (client,address)).start()
+
+    def sync(self):
+        cur_thread = threading.current_thread()
+        while True:
+            if self.__time_to_sync():
+                print(f"{cur_thread.name}: SYNC TIME")
+
+            sleep(1)
 
     def listenToClient(self, client, address):
         size = 1024
+        cur_thread = threading.current_thread()
+        message = f"ID: {cur_thread.name}"
+        client.send(bytes(message, "ascii"))
+        self.__save_client_informations(cur_thread.name, client, address)
+
         while True:
             try:
-                cur_thread = threading.current_thread()
                 data = client.recv(size)
                 if data:
                     response = str(data, encoding='ascii')
                     print(f"{cur_thread.name}: {response}")
-                    if response == "connected":
+                    if self.__time_to_sync():
+                        message = f"server_time: {self.time}"
+                        client.send(bytes(message, "ascii"))
+
+                    else:
+                        # if response.startswith("time:"):
+                        #     response
+
                         client.send(b"awaiting")
 
                 else:
@@ -91,10 +112,12 @@ class Server(Client):
                 client = self.__search_by_id(key)
                 client.adjust_time(times[key]["adjust"])
 
-    def __search_by_id(self, id: str) -> Client:
-        for client in self.client_list:
-            if client.id == id:
-                return client
+    def __save_client_informations(self, name, client, address):
+        self.client_list.append({
+            "id": name,
+            "client": client,
+            "address": address
+        })
 
     def __calculate_average_time_of_clients(self, times: Dict[str, int]):
         """ """
@@ -105,3 +128,6 @@ class Server(Client):
         times = berkeley.calculate(times)
 
         self.send_new_time(times)
+
+    def __time_to_sync(self):
+        return datetime.now().second / 10 == datetime.now().second // 10
