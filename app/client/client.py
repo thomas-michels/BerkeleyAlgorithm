@@ -26,6 +26,7 @@ class Client:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.HOST, self.PORT))
         print(f"Cliente conectando em {self.HOST}:{self.PORT}")
+        print(f"My time: {self.time}")
         try:
             while True:
                 response = str(sock.recv(1024), 'ascii')
@@ -38,8 +39,21 @@ class Client:
                     message = f"time: {self.time}"
                     sock.send(bytes(message, 'ascii'))
 
-                elif response == "connected":
-                    sock.send(bytes(str(datetime.now()), 'ascii'))
+                elif response.startswith("diff_to_server:"):
+
+                    response = response.split(": ")[1]
+                    server_time = datetime.fromisoformat(response)
+                    diff = self.calculate_time_diff_to_server(server_time)
+                    message = f"diff: {diff}"
+                    sock.send(bytes(message, 'ascii'))
+
+                elif response.startswith("adjust:"):
+                    response = float(response.split(": ")[1])
+                    self.adjust_time(response)
+
+                    message = f"new_time: {self.time}"
+                    sock.send(bytes(message, 'ascii'))
+
                 else:
                     sock.send(b"connected")
                 sleep(1)
