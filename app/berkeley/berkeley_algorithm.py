@@ -26,12 +26,10 @@ class BerkeleyAlgorithm:
 
         mean = self.__get_mean(average_times)
 
-        for key in average_times.keys:
+        for key in average_times.keys():
             diff = average_times[key]["diff"]
             time = average_times[key]["time"]
-            average_times[key]["adjust"] = adjust_time_by_minutes(
-                time, (diff * -1) + mean
-            )
+            average_times[key]["adjust"] = (diff * -1) + mean
 
         return average_times
 
@@ -49,7 +47,7 @@ class BerkeleyAlgorithm:
         """
         time_values = []
 
-        for key in average_times.keys:
+        for key in average_times.keys():
             time_values.append(average_times[key]["diff"])
 
         return sum(time_values) / len(time_values)

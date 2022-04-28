@@ -5,13 +5,13 @@
 from datetime import datetime, timedelta
 
 
-def adjust_time_by_minutes(time: datetime, minutes: int) -> datetime:
+def adjust_time_by_minutes(time: datetime, minutes: float) -> datetime:
     """
     Method to adjust time by minutes
 
     :params:
         time: datetime
-        minutes: int
+        minutes: float
 
     :return: Datetime
     """
