@@ -30,12 +30,18 @@ class Client:
         try:
             while True:
                 response = str(sock.recv(1024), 'ascii')
-                print("Received: {}".format(response))
+                print(response)
 
                 if response.startswith("ID:"):
                     self.id = response.split(": ")[1]
+                    message = f"{self.id}: awaiting..."
+                    sock.send(bytes(message, 'ascii'))
 
-                if response.startswith("server_time:"):
+                elif response.startswith(f"{self.id}:"):
+                    message = f"{self.id}: awaiting..."
+                    sock.send(bytes(message, 'ascii'))
+
+                elif response.startswith("server_time:"):
                     message = f"time: {self.time}"
                     sock.send(bytes(message, 'ascii'))
 

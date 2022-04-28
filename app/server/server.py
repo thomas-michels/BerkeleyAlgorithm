@@ -32,30 +32,23 @@ class Server(Client):
 
     def listen(self):
         self.sock.listen(5)
-        print("Starting thread for sync")
-        threading.Thread(target = self.sync).start()
         while True:
             cur_thread = threading.current_thread()
-            print(f"{cur_thread.name}: server listening...")
+            print(f"{cur_thread.name}: Creating new thread...")
             client, address = self.sock.accept()
             threading.Thread(target = self.listenToClient, args = (client,address)).start()
 
     def sync(self):
-        cur_thread = threading.current_thread()
-        # lock = threading.Lock()
-        while True:
-            if self.__time_to_sync():
-                self.SYNC = True
-                # lock.acquire()
-                print(f"{cur_thread.name}: SYNC TIME")
-                # self.__clear_response_clients()
-                sleep(1)
-                self.request_client_time()
-                self.SYNC = False
-                # lock.release()
-                print(f"{cur_thread.name}: SYNC COMPLETED")
+        if not self.SYNC:
+            self.SYNC = True
+            print("Server: Starting sync...")
+            self.request_client_time()
+            self.SYNC = False
+            print(f"Server: SYNC COMPLETED")
 
-            sleep(1)
+        else:
+            while self.SYNC:
+                pass
 
     def listenToClient(self, client, address):
         size = 1024
@@ -66,16 +59,13 @@ class Server(Client):
 
         while True:
             try:
-                if not self.SYNC:
-                    data = client.recv(size)
-                    if data:
-                        response = str(data, encoding='ascii')
-                        print(f"{cur_thread.name}: {response}")
-                        if not self.__time_to_sync():
-                            client.send(b"awaiting")
+                response = str(client.recv(size), "ascii")
+                print(f"{response}")
+                if self.__time_to_sync():
+                    sleep(1)
+                    self.sync()
 
-                    # else:
-                    #     client.send(b"awaiting")
+                client.send(bytes(response, "ascii"))
 
             except:
                 print(f"{cur_thread.name}: EXITING...")
@@ -161,10 +151,6 @@ class Server(Client):
         response = client.recv(1024)
         response = str(response, "ascii")
         return int(response.split(": ")[1])
-
-    def __clear_response_clients(self):
-        for client in self.client_list:
-            client["client"].recv(1024)
 
     def __search_by_id(self, id: str):
         for client in self.client_list:
