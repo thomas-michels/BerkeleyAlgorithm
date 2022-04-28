@@ -70,6 +70,7 @@ class Server(Client):
             except:
                 print(f"{cur_thread.name}: EXITING...")
                 client.close()
+                self.client_list.remove(self.__search_by_id(cur_thread.name))
                 return False
 
     def request_client_time(self) -> None:
@@ -109,9 +110,9 @@ class Server(Client):
             else:
                 client_socket = self.__search_by_id(id)
                 message = f"adjust: {client['adjust']}"
-                client_socket.send(bytes(message, "ascii"))
+                client_socket["client"].send(bytes(message, "ascii"))
 
-                response = str(client_socket.recv(1024), "ascii")
+                response = str(client_socket["client"].recv(1024), "ascii")
                 print(f"{id}: {response}")
                 response = response.split(": ")[1]
 
@@ -155,4 +156,4 @@ class Server(Client):
     def __search_by_id(self, id: str):
         for client in self.client_list:
             if client["id"] == id:
-                return client["client"]
+                return client
