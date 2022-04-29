@@ -23,7 +23,7 @@ class Client:
         self.start_connection()
 
     def start_connection(self):
-        sock = SocketConnection.start_client_connection(self.HOST, self.PORT)
+        sock = SocketConnection.start_client_connection(host=self.HOST, port=self.PORT)
         print(f"Cliente conectando em {self.HOST}:{self.PORT}")
         print(f"My time: {self.time}")
         try:
@@ -38,18 +38,20 @@ class Client:
                 elif response.startswith(f"{self.id}:"):
                     SocketConnection.send(sock=sock, message=f"{self.id}: awaiting...")
 
-                elif response.startswith("server_time:"):
-                    SocketConnection.send(sock=sock, message=f"time: {self.time}")
+                elif response.startswith("clock_request"):
+                    SocketConnection.send(sock=sock, message=f"clock: {self.time}")
 
-                elif response.startswith("diff_to_server:"):
+                elif response.startswith("clock_diff:"):
 
                     response = response.split(": ")[1]
                     server_time = datetime.fromisoformat(response)
                     diff = self.calculate_time_diff_to_server(server_time)
 
-                    SocketConnection.send(sock=sock, message=f"diff: {diff}")
+                    SocketConnection.send(
+                        sock=sock, message=f"client_clock_diff: {diff}"
+                    )
 
-                elif response.startswith("adjust:"):
+                elif response.startswith("clock_adjust:"):
                     response = float(response.split(": ")[1])
                     self.adjust_time(response)
 
@@ -62,10 +64,9 @@ class Client:
 
         except Exception as error:
             print(error)
-    
+
         finally:
             sock.close()
-
 
     def calculate_time_diff_to_server(self, server_time: datetime) -> int:
         """

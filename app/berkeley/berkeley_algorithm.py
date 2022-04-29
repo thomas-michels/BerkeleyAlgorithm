@@ -2,8 +2,7 @@
     Module for Berkeley Algorithm
 """
 
-from typing import Dict
-from app.utils import adjust_time_by_minutes
+from typing import Any, Dict
 
 
 class BerkeleyAlgorithm:
@@ -11,43 +10,26 @@ class BerkeleyAlgorithm:
     BerkeleyAlgorithm class
     """
 
+    @classmethod
     def calculate(
-        self, average_times: Dict[str, Dict[str, int]]
-    ) -> Dict[str, Dict[str, int]]:
+        self, average_times: Dict[str, Dict[str, Any]]
+    ) -> Dict[str, Dict[str, Any]]:
         """
-        Method to calculate time for client/server
+        Method to calculate clock adjust to client/server
 
         :param:
-            average_times: Dict[str, Dict[str, int]]
+            average_times: Dict[str, Dict[str, Any]]
 
         :return:
-            average_times: Dict[str, Dict[str, int]]
+            average_times: Dict[str, Dict[str, Any]]
         """
-
-        mean = self.__get_mean(average_times)
+        diff_list = average_times["mean"]
+        mean = sum(diff_list) / len(diff_list)
+        average_times.pop("mean")
 
         for key in average_times.keys():
+
             diff = average_times[key]["diff"]
-            time = average_times[key]["time"]
             average_times[key]["adjust"] = (diff * -1) + mean
 
         return average_times
-
-    @staticmethod
-    def __get_mean(
-        average_times: Dict[str, Dict[str, int]]
-    ) -> Dict[str, Dict[str, int]]:
-        """
-        Method to calculate mean of average_times dict
-
-        :param:
-            average_times: Dict[str, Dict[str, int]]
-
-        :return: Dict[str, Dict[str, int]]
-        """
-        time_values = []
-
-        for key in average_times.keys():
-            time_values.append(average_times[key]["diff"])
-
-        return sum(time_values) / len(time_values)
