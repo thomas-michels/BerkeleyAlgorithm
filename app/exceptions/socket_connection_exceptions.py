@@ -13,3 +13,9 @@ class ReceiveError(Exception):
     """
     Raised when occur error on receive message
     """
+
+
+class SocketConnectionError(Exception):
+    """
+    Raised when occur error on start connection
+    """

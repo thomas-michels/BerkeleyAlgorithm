@@ -5,8 +5,8 @@
 from app.timer import Timer
 from datetime import datetime
 from app.utils import adjust_time_by_minutes
-import socket
 from time import sleep
+from app.connection import SocketConnection
 
 
 class Client:
@@ -23,49 +23,45 @@ class Client:
         self.start_connection()
 
     def start_connection(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((self.HOST, self.PORT))
+        sock = SocketConnection.start_client_connection(self.HOST, self.PORT)
         print(f"Cliente conectando em {self.HOST}:{self.PORT}")
         print(f"My time: {self.time}")
         try:
             while True:
-                response = str(sock.recv(1024), 'ascii')
+                response = SocketConnection.recieve(sock=sock)
                 print(response)
 
                 if response.startswith("ID:"):
                     self.id = response.split(": ")[1]
-                    message = f"{self.id}: awaiting..."
-                    sock.send(bytes(message, 'ascii'))
+                    SocketConnection.send(sock=sock, message=f"{self.id}: awaiting...")
 
                 elif response.startswith(f"{self.id}:"):
-                    message = f"{self.id}: awaiting..."
-                    sock.send(bytes(message, 'ascii'))
+                    SocketConnection.send(sock=sock, message=f"{self.id}: awaiting...")
 
                 elif response.startswith("server_time:"):
-                    message = f"time: {self.time}"
-                    sock.send(bytes(message, 'ascii'))
+                    SocketConnection.send(sock=sock, message=f"time: {self.time}")
 
                 elif response.startswith("diff_to_server:"):
 
                     response = response.split(": ")[1]
                     server_time = datetime.fromisoformat(response)
                     diff = self.calculate_time_diff_to_server(server_time)
-                    message = f"diff: {diff}"
-                    sock.send(bytes(message, 'ascii'))
+
+                    SocketConnection.send(sock=sock, message=f"diff: {diff}")
 
                 elif response.startswith("adjust:"):
                     response = float(response.split(": ")[1])
                     self.adjust_time(response)
 
-                    message = f"new_time: {self.time}"
-                    sock.send(bytes(message, 'ascii'))
+                    SocketConnection.send(sock=sock, message=f"new_time: {self.time}")
 
                 else:
-                    sock.send(b"connected")
+                    SocketConnection.send(sock=sock, message="Connected")
+
                 sleep(1)
 
-        except Exception:
-            pass
+        except Exception as error:
+            print(error)
     
         finally:
             sock.close()

@@ -7,9 +7,9 @@ from typing import Dict, List
 from app.client import Client
 from datetime import datetime
 from app.berkeley import BerkeleyAlgorithm
-import socket
 import threading
 from app.timer import Timer
+from app.connection import SocketConnection
 
 
 class Server(Client):
@@ -20,11 +20,10 @@ class Server(Client):
     HOST = "localhost"
     PORT = 8000
     SYNC = False
+    SIZE = 1024
 
     def __init__(self) -> None:
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.bind((self.HOST, self.PORT))
+        self.sock = SocketConnection.start_server_connection(self.HOST, self.PORT)
 
         self.time = Timer().get_time()
         self.client_list: List[Dict] = []
@@ -38,7 +37,7 @@ class Server(Client):
             cur_thread = threading.current_thread()
             print(f"{cur_thread.name}: Creating new thread...")
             client, address = self.sock.accept()
-            threading.Thread(target = self.listenToClient, args = (client,address)).start()
+            threading.Thread(target=self.listenToClient, args=(client, address)).start()
 
     def sync(self):
         if not self.SYNC:
@@ -53,25 +52,23 @@ class Server(Client):
                 pass
 
     def listenToClient(self, client, address):
-        size = 1024
         cur_thread = threading.current_thread()
-        message = f"ID: {cur_thread.name}"
-        client.send(bytes(message, "ascii"))
+        SocketConnection.send(sock=client, message=f"ID: {cur_thread.name}")
         self.__save_client_informations(cur_thread.name, client, address)
 
         while True:
             try:
-                response = str(client.recv(size), "ascii")
-                print(f"{response}")
+                response = SocketConnection.recieve(sock=client)
+                print(response)
                 if self.__time_to_sync():
                     sleep(1)
                     self.sync()
 
-                client.send(bytes(response, "ascii"))
+                SocketConnection.send(sock=client, message=response)
 
             except:
                 print(f"{cur_thread.name}: EXITING...")
-                client.close()
+                SocketConnection.close_connection(sock=client)
                 self.client_list.remove(self.__search_by_id(cur_thread.name))
                 return False
 
@@ -114,16 +111,12 @@ class Server(Client):
                 message = f"adjust: {client['adjust']}"
                 client_socket["client"].send(bytes(message, "ascii"))
 
-                response = str(client_socket["client"].recv(1024), "ascii")
+                response = str(client_socket["client"].recv(self.SIZE), "ascii")
                 print(f"{id}: {response}")
                 response = response.split(": ")[1]
 
     def __save_client_informations(self, name, client, address):
-        self.client_list.append({
-            "id": name,
-            "client": client,
-            "address": address
-        })
+        self.client_list.append({"id": name, "client": client, "address": address})
 
     def __calculate_average_time_of_clients(self, times: Dict[str, Dict[str, int]]):
         """ """
