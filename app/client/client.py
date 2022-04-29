@@ -19,7 +19,7 @@ class Client:
 
     def __init__(self) -> None:
         self.id = ""
-        self.time = Timer().get_time(is_random=True)
+        self.time = Timer.get_time(is_random=True)
         self.start_connection()
 
     def start_connection(self):

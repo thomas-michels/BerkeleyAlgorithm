@@ -25,7 +25,7 @@ class Server(Client):
     def __init__(self) -> None:
         self.sock = SocketConnection.start_server_connection(self.HOST, self.PORT)
 
-        self.time = Timer().get_time()
+        self.time = Timer.get_time()
         self.client_list: List[Dict] = []
 
         self.listen()

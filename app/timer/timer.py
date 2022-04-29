@@ -12,6 +12,7 @@ class Timer:
     Timer class
     """
 
+    @classmethod
     def get_time(self, is_random: bool = False) -> datetime:
         """
         Method to get time
