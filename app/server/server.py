@@ -9,6 +9,7 @@ from datetime import datetime
 from app.berkeley import BerkeleyAlgorithm
 import socket
 import threading
+from app.timer import Timer
 
 
 class Server(Client):
@@ -25,13 +26,14 @@ class Server(Client):
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.HOST, self.PORT))
 
-        self.time = datetime.now()
+        self.time = Timer().get_time()
         self.client_list: List[Dict] = []
 
         self.listen()
 
     def listen(self):
         self.sock.listen(5)
+        print(f"Server time: {self.time}")
         while True:
             cur_thread = threading.current_thread()
             print(f"{cur_thread.name}: Creating new thread...")
@@ -151,7 +153,7 @@ class Server(Client):
 
         response = client.recv(1024)
         response = str(response, "ascii")
-        return int(response.split(": ")[1])
+        return float(response.split(": ")[1])
 
     def __search_by_id(self, id: str):
         for client in self.client_list:

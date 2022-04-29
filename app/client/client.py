@@ -2,7 +2,7 @@
     Module for Client Class
 """
 
-from random import randint
+from app.timer import Timer
 from datetime import datetime
 from app.utils import adjust_time_by_minutes
 import socket
@@ -19,7 +19,7 @@ class Client:
 
     def __init__(self) -> None:
         self.id = ""
-        self.time = self.__generate_random_time()
+        self.time = Timer().get_time(is_random=True)
         self.start_connection()
 
     def start_connection(self):
@@ -81,19 +81,9 @@ class Client:
         :return: int
         """
         if server_time > self.time:
-            return ((self.time - server_time).seconds // 60) * -1
+            return ((server_time - self.time).seconds / 60) * -1
 
-        return (self.time - server_time).seconds // 60
+        return (self.time - server_time).seconds / 60
 
     def adjust_time(self, minutes: int) -> None:
         self.time = adjust_time_by_minutes(self.time, minutes)
-
-    @staticmethod
-    def __generate_random_time() -> datetime:
-        """
-        Method to generate a random time to client
-
-        :return: Datetime
-        """
-        random_time_diff = randint(-1000, 1000)
-        return adjust_time_by_minutes(datetime.now(), random_time_diff)
